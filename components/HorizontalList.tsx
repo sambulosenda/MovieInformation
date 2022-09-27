@@ -1,5 +1,5 @@
 import React from "react";
-import { FlatList } from "react-native-gesture-handler";
+import { FlatList } from "react-native";
 import styled from "styled-components/native";
 import { Movie, TV } from "../api";
 import VerticalMedia from "./VeticalMedia";

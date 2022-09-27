@@ -13,7 +13,7 @@ import Swiper from "react-native-swiper";
 import styled from "styled-components/native";
 import Slide from "../components/Slide";
 
-import { moviesAPI } from "../api";
+import { MovieResponse, moviesAPI } from "../api";
 import HorizontalMedia from "../components/HorizontalMedia";
 import VerticalMedia from "../components/VeticalMedia";
 
@@ -117,26 +117,23 @@ const Movies: React.FC<NativeStackScreenProps<any, "Movies">> = () => {
     isLoading: nowPlayingLoading,
     data: nowPlayingData,
     isRefetching: isRefetchingUpcoming,
-  } = useQuery(["movies", "nowPlaying"], moviesAPI.nowPlaying);
+  } = useQuery<MovieResponse>(["movies", "nowPlaying"], moviesAPI.nowPlaying);
 
   const {
     isLoading: upcomingLoading,
     data: upcomingData,
     isRefetching: isRefetchingNowPlaying,
-  } = useQuery(["movies", "upcoming"], moviesAPI.upcoming);
+  } = useQuery<MovieResponse>(["movies", "upcoming"], moviesAPI.upcoming);
 
   const {
     isLoading: trendingLoading,
     data: trendingData,
     isRefetching: isRefetchingTrending,
-  } = useQuery(["movies", "trending"], moviesAPI.trending);
-
+  } = useQuery<MovieResponse>(["movies", "trending"], moviesAPI.trending);
 
   const onRefresh = async () => {
     queryClient.refetchQueries(["movies"]);
   };
-
-  
 
   const renderVerticalMedia = ({ item }) => (
     <VerticalMedia
@@ -144,6 +141,7 @@ const Movies: React.FC<NativeStackScreenProps<any, "Movies">> = () => {
       posterPath={item.poster_path}
       originalTitle={item.original_title}
       voteAverage={item.vote_average}
+      fullData={item}
     />
   );
 
@@ -154,20 +152,21 @@ const Movies: React.FC<NativeStackScreenProps<any, "Movies">> = () => {
       originalTitle={item.original_title}
       overview={item.overview}
       releaseDate={item.release_date}
+      fullData={item}
     />
   );
 
   const movieKeyExtractor = (item) => item.id + "";
 
   const loading = nowPlayingLoading || upcomingLoading || trendingLoading;
-const refreshing =
+  const refreshing =
     isRefetchingNowPlaying || isRefetchingUpcoming || isRefetchingTrending;
-  console.log(refreshing);
+  //console.log(Object.keys(nowPlayingData?.results[0]));
   return loading ? (
     <Loader>
       <ActivityIndicator />
     </Loader>
-  ) : (
+  ) : upcomingData ? (
     <FlatList
       onRefresh={onRefresh}
       refreshing={refreshing}
@@ -186,29 +185,32 @@ const refreshing =
               marginBottom: 40,
             }}
           >
-            {nowPlayingData.results.map((movie) => (
+            {nowPlayingData?.results.map((movie) => (
               <Slide
                 key={movie.id}
-                backdropPath={movie.backdrop_path}
-                posterPath={movie.poster_path}
+                backdropPath={movie.backdrop_path || ""}
+                posterPath={movie.poster_path || ""}
                 originalTitle={movie.original_title}
                 voteAverage={movie.vote_average}
                 overview={movie.overview}
+                fullData={movie}
               />
             ))}
           </Swiper>
           <ListContainer>
             <ListTitle>Trending Movies</ListTitle>
-
-            <TrendingScroll
-              data={trendingData.results}
-              keyExtractor={movieKeyExtractor}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              ItemSeparatorComponent={() => <View style={{ width: 30 }} />}
-              contentContainerStyle={{ paddingLeft: 30 }}
-              renderItem={renderVerticalMedia}
-            />
+            {trendingData ? (
+              <TrendingScroll
+                style={{ marginTop: 20 }}
+                data={trendingData.results}
+                keyExtractor={movieKeyExtractor}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                ItemSeparatorComponent={() => <View style={{ width: 30 }} />}
+                contentContainerStyle={{ paddingLeft: 30 }}
+                renderItem={renderVerticalMedia}
+              />
+            ) : null}
           </ListContainer>
           <ComingSoonTitle>Coming soon</ComingSoonTitle>
         </>
@@ -217,7 +219,7 @@ const refreshing =
       keyExtractor={movieKeyExtractor}
       renderItem={renderHorizontalMedia}
     />
-  );
+  ) : null;
 };
 
 export default Movies;
